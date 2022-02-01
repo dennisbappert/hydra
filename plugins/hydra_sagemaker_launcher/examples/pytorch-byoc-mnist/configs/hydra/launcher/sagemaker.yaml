@@ -1,0 +1,77 @@
+defaults:
+  - aws_sagemaker
+
+dry_run: False
+
+s3_bucket: ${oc.env:HYDRA_SAGEMAKER_S3_BUCKET}
+s3_bucket_prefix: hydra-sagemaker/pytorch-byoc-mnist/${now:%Y-%m-%d_%H-%M-%S}
+
+kwargs:
+  aws_account_id: ${oc.env:HYDRA_SAGEMAKER_AWS_ACCOUNT_ID}
+  container_name: sm_hydra_mnist
+  repository: ${.aws_account_id}.dkr.ecr.${hydra.launcher.sagemaker.region}.amazonaws.com
+  image_url: ${.repository}/${.container_name}:latest
+  # "arn:aws:iam::${.aws_account_id}:role/service-role/AmazonSageMaker-ExecutionRole-**************"
+  role_arn: ${oc.env:HYDRA_SAGEMAKER_ROLE_ARN}
+
+script:
+  script_dir: .
+
+commands_up:
+  - name: "Building container image"
+    cmd:
+      [
+        "docker build -t ${hydra.launcher.kwargs.container_name} -f ./Dockerfile .",
+      ]
+    shell: True
+
+  - name: "Login to target ECR repository"
+    cmd:
+      [
+        "aws ecr get-login-password --region ${hydra.launcher.sagemaker.region} | docker login --username AWS --password-stdin ${hydra.launcher.kwargs.repository}",
+      ]
+    shell: True
+
+  - name: "Create target repository (this will silently fail if it already exists)"
+    cmd:
+      [
+        "aws ecr create-repository --repository-name ${hydra.launcher.kwargs.container_name} || true",
+      ]
+    shell: True
+
+  - name: "Push container image to ECR"
+    cmd:
+      [
+        "docker tag ${hydra.launcher.kwargs.container_name} ${hydra.launcher.kwargs.image_url} && docker push ${hydra.launcher.kwargs.image_url}",
+      ]
+    shell: True
+
+sagemaker:
+  region: ${oc.env:HYDRA_SAGEMAKER_REGION}
+
+  # the mnist example is downloading the dataset if it does not exist locally
+  channels: {}
+
+  estimator_options:
+    role: ${oc.env:HYDRA_SAGEMAKER_ROLE_ARN}
+    instance_count: 1
+    instance_type: ml.g4dn.xlarge
+    disable_profiler: True
+    enable_sagemaker_metrics: True
+    hyperparameters: ~
+
+    image_uri: ${hydra.launcher.kwargs.image_url}
+
+    metric_definitions:
+      - Name: Train Epoch
+        Regex: "Train Epoch: (\\d*)"
+      - Name: Train loss
+        Regex: "Train Epoch: .*Loss: (\\d*\\.?\\d+)"
+      - Name: Test loss
+        Regex: "Test set: Average loss: (\\d*\\.?\\d+),"
+      - Name: Test accuracy
+        Regex: "Test set: .* Accuracy: (\\d*)"
+
+  fit_options:
+    wait: False
+    job_name: sm-hydra-mnist-${now:%Y-%m-%d-%H-%M-%S}s

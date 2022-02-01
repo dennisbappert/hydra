@@ -1,0 +1,41 @@
+defaults:
+  - aws_sagemaker
+
+dry_run: False
+
+s3_bucket: ${oc.env:HYDRA_SAGEMAKER_S3_BUCKET}
+s3_bucket_prefix: hydra-sagemaker/pytorch-builtin-mnist/${now:%Y-%m-%d_%H-%M-%S}
+
+script:
+  script_dir: .
+
+sagemaker:
+  region: ${oc.env:HYDRA_SAGEMAKER_REGION}
+
+  # the mnist example is downloading the dataset if it does not exist locally
+  channels: {}
+
+  estimator_options:
+    role: ${oc.env:HYDRA_SAGEMAKER_ROLE_ARN}
+    instance_count: 1
+    instance_type: ml.g4dn.xlarge
+    disable_profiler: True
+    enable_sagemaker_metrics: True
+    hyperparameters: ~
+
+    framework_version: "1.8.1"
+    py_version: py3
+
+    metric_definitions:
+      - Name: Train Epoch
+        Regex: "Train Epoch: (\\d*)"
+      - Name: Train loss
+        Regex: "Train Epoch: .*Loss: (\\d*\\.?\\d+)"
+      - Name: Test loss
+        Regex: "Test set: Average loss: (\\d*\\.?\\d+),"
+      - Name: Test accuracy
+        Regex: "Test set: .* Accuracy: (\\d*)"
+
+  fit_options:
+    wait: False
+    job_name: sm-hydra-mnist-${now:%Y-%m-%d-%H-%M-%S}s
