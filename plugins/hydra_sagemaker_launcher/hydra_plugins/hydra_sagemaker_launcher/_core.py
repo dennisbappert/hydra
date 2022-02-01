@@ -32,14 +32,14 @@ from hydra_plugins.hydra_sagemaker_launcher._utils import (
     _split_s3_path,
 )
 from hydra_plugins.hydra_sagemaker_launcher.sagemaker_launcher import (
-    AWSSageMakerLauncher,  # type: ignore
+    AmazonSageMakerLauncher,  # type: ignore
 )
 
 log = logging.getLogger(__name__)
 
 
 def launch(
-    launcher: AWSSageMakerLauncher,
+    launcher: AmazonSageMakerLauncher,
     job_overrides: Sequence[Sequence[str]],
     initial_job_idx: int,
 ) -> Sequence[JobReturn]:

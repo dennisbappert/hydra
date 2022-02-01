@@ -6,14 +6,13 @@ from hydra.types import HydraContext, TaskFunction
 from omegaconf import DictConfig
 
 from hydra_plugins.hydra_sagemaker_launcher._config import (  # type: ignore
-    AWSSageMakerLauncherConf,
     CommandConf,
     S3SyncConf,
     ScriptConf,
 )
 
 
-class AWSSageMakerLauncher(Launcher):
+class AmazonSageMakerLauncher(Launcher):
     def __init__(
         self,
         sagemaker: DictConfig,

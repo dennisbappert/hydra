@@ -1,5 +1,5 @@
 defaults:
-  - aws_sagemaker
+  - amazon_sagemaker
 
 dry_run: False
 

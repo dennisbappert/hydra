@@ -31,7 +31,7 @@ class ScriptConf:
 
 
 @dataclass
-class AWSSageMakerConf:
+class AmazonSageMakerConf:
     region: Optional[str] = None
 
     channels: Dict[str, Any] = field(default_factory=dict)
@@ -51,9 +51,9 @@ class AWSSageMakerConf:
 
 
 @dataclass
-class AWSSageMakerLauncherConf:
+class AmazonSageMakerLauncherConf:
     _target_: str = (
-        "hydra_plugins.hydra_sagemaker_launcher.sagemaker_launcher.AWSSageMakerLauncher"
+        "hydra_plugins.hydra_sagemaker_launcher.sagemaker_launcher.AmazonSageMakerLauncher"
     )
 
     dry_run: bool = False
@@ -71,7 +71,7 @@ class AWSSageMakerLauncherConf:
     # source is local dir, target is remote dir
     sync_up: Optional[List[S3SyncConf]] = None
 
-    sagemaker: AWSSageMakerConf = AWSSageMakerConf()
+    sagemaker: AmazonSageMakerConf = AmazonSageMakerConf()
 
     kwargs: Optional[Dict[str, Any]] = field(default_factory=dict)
 
@@ -79,7 +79,7 @@ class AWSSageMakerLauncherConf:
 config_store = ConfigStore.instance()
 config_store.store(
     group="hydra/launcher",
-    name="aws_sagemaker",
-    node=AWSSageMakerLauncherConf,
-    provider="aws_sagemaker_launcher",
+    name="amazon_sagemaker",
+    node=AmazonSageMakerLauncherConf,
+    provider="amazon_sagemaker_launcher",
 )
