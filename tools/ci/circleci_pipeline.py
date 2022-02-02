@@ -18,7 +18,7 @@ BASE = dirname(dirname(os.path.abspath(os.path.dirname(__file__))))
 
 # a list of plugins that should be its own test suite
 # could be due to dependency or time to run the test
-test_alone_plugins = ["hydra_ray_launcher"]
+test_alone_plugins = ["hydra_ray_launcher", "hydra_sagemaker_launcher"]
 
 
 def chunk(it, size):

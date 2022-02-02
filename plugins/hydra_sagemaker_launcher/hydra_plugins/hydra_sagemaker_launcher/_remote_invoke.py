@@ -46,11 +46,12 @@ def main(jobspec_dir=None) -> JobReturn:
 
         if "SM_MODEL_DIR" in os.environ:
             result_dir = os.environ.get("SM_MODEL_DIR")
+            # in SageMaker we only execute one sweep at a time, so we don't need a local subdir within the training container
+            sweep_config.hydra.sweep.subdir = ""
         else:
             result_dir = jobspec_dir
 
         sweep_config.hydra.sweep.dir = result_dir
-        sweep_config.hydra.sweep.subdir = ""
 
         setup_globals()
         Singleton.set_state(singleton_state)

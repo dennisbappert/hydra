@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import sys
 import tarfile
 import tempfile
@@ -74,6 +75,7 @@ def launch(
             )
             with open_dict(sweep_config):
                 sweep_config.hydra.job.num = idx
+                sweep_config.hydra.job.id = f"job_id_for_{idx}"
 
             _pickle_job(
                 tmp_dir=local_tmp_dir,
@@ -87,8 +89,20 @@ def launch(
                 log.info("Performing a dry run by directly executing _remote_invoke.py")
                 from ._remote_invoke import main as launch_job_locally
 
-                result = launch_job_locally(local_tmp_dir)
+                _pickle_job(
+                    tmp_dir=sweep_config.hydra.sweep.dir,
+                    hydra_context=launcher.hydra_context,
+                    sweep_config=sweep_config,
+                    task_function=launcher.task_function,
+                    singleton_state=Singleton.get_state(),
+                )
+
+                result = launch_job_locally(sweep_config.hydra.sweep.dir) #(local_tmp_dir)
                 job_queue.append(Job(sweep_config=sweep_config, result=result))
+
+                # Path(result.working_dir).mkdir(parents=True, exist_ok=True)
+                # TODO: dirs_exist_ok only exists in python 3.8
+                # shutil.copytree(local_tmp_dir, result.working_dir, dirs_exist_ok=True)
 
                 # We do not need to process further in a dry_run
                 continue
